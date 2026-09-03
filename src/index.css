@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Discord Bot Theme Tokens */
+  --bg-paper: #0f1115;
+  --bg-zinc-900: #18181b;
+  --bg-zinc-800: #27272a;
+  
+  --border-zinc-700: #3f3f46;
+  
+  --text-white: #ffffff;
+  --text-zinc-300: #d4d4d8;
+  --text-ink-soft: #a1a1aa;
+  
+  --accent-indigo-500: #6366f1;
+  --accent-indigo-600: #4f46e5;
+  
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  
+  --radius-8: 8px;
+  --radius-14: 14px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-paper);
+  background-image: radial-gradient(
+    circle at 12% -10%,
+    rgba(129, 140, 248, 0.12),
+    transparent 45%
+  );
+  color: var(--text-white);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--accent-indigo-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
