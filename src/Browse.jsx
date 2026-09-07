@@ -41,7 +41,7 @@ const Browse = () => {
         try {
             const { data, error } = await supabase.from('files').select('*');
             if (error) throw error;
-            
+
             const mappedData = data.map(file => ({
                 id: file.id,
                 title: file.name,
@@ -70,7 +70,7 @@ const Browse = () => {
                 .createSignedUrl(note.storage_path, 60 * 60);
 
             if (error) throw error;
-            
+
             // Trigger download
             const link = document.createElement('a');
             link.href = data.signedUrl;
@@ -82,7 +82,7 @@ const Browse = () => {
 
             // Increment downloads
             await supabase.from('files').update({ downloads: note.downloads + 1 }).eq('id', note.id);
-            setNotes(prev => prev.map(n => n.id === note.id ? {...n, downloads: n.downloads + 1} : n));
+            setNotes(prev => prev.map(n => n.id === note.id ? { ...n, downloads: n.downloads + 1 } : n));
         } catch (err) {
             alert('Error downloading: ' + err.message);
         }
@@ -244,9 +244,9 @@ const Browse = () => {
                                     <span className="note-downloads">
                                         <Download size={13} aria-hidden="true" /> {note.downloads}
                                     </span>
-                                    <button 
-                                        type="button" 
-                                        className="btn-ghost note-download-btn" 
+                                    <button
+                                        type="button"
+                                        className="btn-ghost note-download-btn"
                                         aria-label={`Download ${note.title}`}
                                         onClick={(e) => {
                                             e.stopPropagation();

@@ -28,7 +28,7 @@
   border: 1px solid var(--border-zinc-700);
   border-radius: var(--radius-14);
   padding: 1rem;
-  box-shadow: 0 10px 30px -14px rgba(0,0,0,0.6);
+  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.6);
 }
 
 .card-header {
