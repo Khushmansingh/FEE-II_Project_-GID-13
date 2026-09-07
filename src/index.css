@@ -1,11 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
 :root {
   /* Discord Bot Theme Tokens */
   --bg-paper: #0f1115;
   --bg-zinc-900: #18181b;
   --bg-zinc-800: #27272a;
-  --bg-zinc-950: #0a0a0a;
 
   --border-zinc-700: #3f3f46;
 
@@ -28,7 +27,6 @@
   --bg-paper: #f5f5f7;
   --bg-zinc-900: #ffffff;
   --bg-zinc-800: #f0f0f3;
-  --bg-zinc-950: #eaeaed;
 
   --border-zinc-700: #d4d4d8;
 
@@ -40,16 +38,6 @@
   --accent-indigo-600: #4f46e5;
 }
 
-/* ─── Font Overrides ─── */
-[data-font="mono"] {
-  --font-body: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-display: 'JetBrains Mono', 'Fira Code', monospace;
-}
-
-[data-font="serif"] {
-  --font-body: 'Merriweather', 'Georgia', serif;
-  --font-display: 'Merriweather', 'Georgia', serif;
-}
 
 * {
   margin: 0;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, LayoutGrid, List, FileText, Download, SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import './Browse.css';

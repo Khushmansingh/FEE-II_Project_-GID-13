@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext(undefined);
 
 const THEME_KEY = 'campus-vault-theme';
-const FONT_KEY = 'campus-vault-font';
 
 export const ThemeProvider = ({ children }) => {
     const [theme, setTheme] = useState(() => {
@@ -14,28 +13,15 @@ export const ThemeProvider = ({ children }) => {
         }
     });
 
-    const [font, setFont] = useState(() => {
-        try {
-            return localStorage.getItem(FONT_KEY) || 'default';
-        } catch {
-            return 'default';
-        }
-    });
-
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         try { localStorage.setItem(THEME_KEY, theme); } catch { /* noop */ }
     }, [theme]);
 
-    useEffect(() => {
-        document.documentElement.setAttribute('data-font', font);
-        try { localStorage.setItem(FONT_KEY, font); } catch { /* noop */ }
-    }, [font]);
-
     const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
 
     return (
-        <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, font, setFont }}>
+        <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
             {children}
         </ThemeContext.Provider>
     );

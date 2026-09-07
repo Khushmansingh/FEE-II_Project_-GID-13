@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { FolderOpen, Upload, Search, Sun, Moon } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
