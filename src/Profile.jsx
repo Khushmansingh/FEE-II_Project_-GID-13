@@ -4,15 +4,12 @@ import {
     Palette,
     Sun,
     Moon,
-    Type,
     Edit3,
     Save,
     X,
     LogOut,
     Trash2,
     GraduationCap,
-    Mail,
-    BookOpen,
     Calendar,
 } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
