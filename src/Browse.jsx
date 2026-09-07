@@ -67,18 +67,19 @@ const Browse = () => {
         try {
             const { data, error } = await supabase.storage
                 .from('vault_files')
-                .createSignedUrl(note.storage_path, 60 * 60);
+                .download(note.storage_path);
 
             if (error) throw error;
 
-            // Trigger download
+            // Create a blob URL and trigger a real download
+            const url = URL.createObjectURL(data);
             const link = document.createElement('a');
-            link.href = data.signedUrl;
+            link.href = url;
             link.download = note.title;
-            link.target = '_blank';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
 
             // Increment downloads
             await supabase.from('files').update({ downloads: note.downloads + 1 }).eq('id', note.id);
