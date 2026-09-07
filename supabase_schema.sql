@@ -69,7 +69,7 @@ CREATE POLICY "Profiles are insertable by everyone" ON profiles
 CREATE POLICY "Profiles are updatable by everyone" ON profiles
   FOR UPDATE USING (true);
 
--- Create a storage bucket for the files
+
 INSERT INTO storage.buckets (id, name, public) VALUES ('vault_files', 'vault_files', true)
 ON CONFLICT (id) DO NOTHING;
 
