@@ -1,17 +1,26 @@
-import { useState } from 'react';
-import Navbar from './components/Navbar';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import Nav from './Nav';
 import Home from './components/Home';
-import SeeFiles from './components/SeeFiles';
+import Browse from './Browse';
+import Profile from './Profile';
+import './App.css';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('upload');
-
   return (
-    <div className="App">
-      <Navbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-      {currentPage === 'upload' && <Home />}
-      {currentPage === 'see-files' && <SeeFiles />}
-    </div>
+    <ThemeProvider>
+      <BrowserRouter>
+        <div className="App">
+          <Nav />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/browse" element={<Browse />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 
