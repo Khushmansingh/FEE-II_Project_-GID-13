@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { Upload, FileText, ChevronDown, X, Send } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Upload, FileText, ChevronDown, X, Send, Loader2 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 import './Home.css';
 
 const Home = () => {
   const [selectedLocation, setSelectedLocation] = useState('');
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const locations = [
@@ -45,6 +47,44 @@ const Home = () => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleUpload = async () => {
+    if (!file || !selectedLocation) return;
+    setIsUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${selectedLocation}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('vault_files')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: dbError } = await supabase
+        .from('files')
+        .insert([
+          {
+            name: file.name,
+            size_bytes: file.size,
+            location_id: selectedLocation,
+            storage_path: filePath
+          }
+        ]);
+
+      if (dbError) throw dbError;
+
+      alert('File uploaded successfully!');
+      setFile(null);
+      setSelectedLocation('');
+    } catch (error) {
+      alert('Error uploading file: ' + error.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -137,10 +177,20 @@ const Home = () => {
         <button
           type="button"
           className="btn-primary"
-          disabled={!file || !selectedLocation}
+          disabled={!file || !selectedLocation || isUploading}
+          onClick={handleUpload}
         >
-          <Send size={16} />
-          Upload to Vault
+          {isUploading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Send size={16} />
+              Upload to Vault
+            </>
+          )}
         </button>
       </section>
     </main>
