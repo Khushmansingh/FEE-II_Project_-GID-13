@@ -53,3 +53,24 @@
     color: var(--text-white);
     background-color: var(--bg-zinc-800);
 }
+
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-8);
+    border: 1px solid var(--border-zinc-700);
+    background-color: transparent;
+    color: var(--text-ink-soft);
+    cursor: pointer;
+    margin-left: 0.375rem;
+    transition: all 0.2s;
+}
+
+.theme-toggle-btn:hover {
+    color: var(--text-white);
+    background-color: var(--bg-zinc-800);
+    border-color: var(--text-ink-soft);
+}

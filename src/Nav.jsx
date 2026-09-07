@@ -1,9 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FolderOpen, Upload, Search, User } from 'lucide-react';
+import { FolderOpen, Upload, Search, Sun, Moon } from 'lucide-react';
+import { useTheme } from './context/ThemeContext';
 import './Nav.css';
 
 const Nav = () => {
+    const { theme, toggleTheme } = useTheme();
+
     return (
         <nav className="nav-bar">
             <div className="nav-inner">
@@ -28,13 +31,20 @@ const Nav = () => {
                         <Search size={15} aria-hidden="true" />
                         Browse
                     </NavLink>
-                    <NavLink
-                        to="/profile"
-                        className={({ isActive }) => `nav-link ${isActive ? 'nav-link-active' : ''}`}
+
+                    <button
+                        type="button"
+                        className="theme-toggle-btn"
+                        onClick={toggleTheme}
+                        aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
                     >
-                        <User size={15} aria-hidden="true" />
-                        Profile
-                    </NavLink>
+                        {theme === 'dark' ? (
+                            <Sun size={16} aria-hidden="true" />
+                        ) : (
+                            <Moon size={16} aria-hidden="true" />
+                        )}
+                    </button>
                 </div>
             </div>
         </nav>
