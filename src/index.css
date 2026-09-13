@@ -48,9 +48,6 @@
 body {
   font-family: var(--font-body);
   background-color: var(--bg-paper);
-  background-image: radial-gradient(circle at 12% -10%,
-      rgba(129, 140, 248, 0.12),
-      transparent 45%);
   color: var(--text-white);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;

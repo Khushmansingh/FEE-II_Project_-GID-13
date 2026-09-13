@@ -1,15 +1,20 @@
-import { useState, useRef } from 'react';
-import { Upload, FileText, ChevronDown, X, Send, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Upload, FileText, ChevronDown, X, Send } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import './Home.css';
 
-const Home = () => {
+// This is the Home page component where users can upload files
+function Home(props) {
+  // State to store which location the user selected
   const [selectedLocation, setSelectedLocation] = useState('');
+  
+  // State to store the file the user wants to upload
   const [file, setFile] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
+  
+  // State to show a loading message while uploading
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef(null);
 
+  // List of locations available in our app
   const locations = [
     { id: 'fee', name: 'FEE-II' },
     { id: 'opps', name: 'OPPS' },
@@ -17,53 +22,36 @@ const Home = () => {
     { id: 'dis', name: 'Discr' }
   ];
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setFile(e.dataTransfer.files[0]);
+  // Function that runs when the user selects a file
+  function handleFileChange(event) {
+    const selectedFile = event.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
     }
-  };
+  }
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const handleUpload = async () => {
+  // Function to upload the file to our database
+  async function handleUpload() {
+    // If no file or location is selected, do nothing
     if (!file || !selectedLocation) return;
+    
+    // Start the loading state
     setIsUploading(true);
 
     try {
+      // Create a unique name for the file so it doesn't overwrite others
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${selectedLocation}/${fileName}`;
+      const fileName = Date.now() + "_" + Math.random().toString(36).substring(7) + "." + fileExt;
+      const filePath = selectedLocation + "/" + fileName;
 
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('vault_files')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
+      // Save file info to Supabase Database
       const { error: dbError } = await supabase
         .from('files')
         .insert([
@@ -77,15 +65,19 @@ const Home = () => {
 
       if (dbError) throw dbError;
 
+      // Show success message and clear form
       alert('File uploaded successfully!');
       setFile(null);
       setSelectedLocation('');
     } catch (error) {
+      // Show error message if something goes wrong
+      console.log("Error uploading:", error);
       alert('Error uploading file: ' + error.message);
     } finally {
+      // Stop the loading state
       setIsUploading(false);
     }
-  };
+  }
 
   return (
     <main className="layout-container">
@@ -94,10 +86,10 @@ const Home = () => {
         <p className="page-description">Upload and share academic resources securely.</p>
       </header>
 
-      <section className="card" aria-labelledby="upload-heading">
+      <section className="card">
         <div className="card-header">
-          <Upload size={18} className="text-white" aria-hidden="true" />
-          <h2 id="upload-heading" className="card-title">Upload Document</h2>
+          <Upload size={18} className="text-white" />
+          <h2 className="card-title">Upload Document</h2>
         </div>
 
         <div className="card-body">
@@ -108,72 +100,48 @@ const Home = () => {
                 className="form-select"
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
-                required
               >
                 <option value="" disabled>Select a location...</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>{loc.name}</option>
-                ))}
+                {/* Loop through our locations array and create an option for each */}
+                {locations.map(function(loc) {
+                  return <option key={loc.id} value={loc.id}>{loc.name}</option>;
+                })}
               </select>
-              <ChevronDown className="select-icon" size={16} aria-hidden="true" />
+              <ChevronDown className="select-icon" size={16} />
             </div>
           </label>
 
           <div className="form-group">
-            <span className="form-label" id="file-upload-label">Selected file</span>
+            <span className="form-label">Select a file</span>
 
-            {!file ? (
-              <div
-                className={`dropzone ${isDragging ? 'active' : ''}`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                aria-labelledby="file-upload-label"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  style={{ display: 'none' }}
-                  aria-hidden="true"
-                  tabIndex={-1}
-                />
-                <Upload className="dropzone-icon" size={24} aria-hidden="true" />
-                <p className="dropzone-text">Click to upload or drag and drop</p>
-                <p className="dropzone-hint">PDF, DOCX, or PPTX (max. 50MB)</p>
-              </div>
-            ) : (
+            {/* Basic file input */}
+            <input
+              type="file"
+              onChange={handleFileChange}
+              style={{ padding: '10px', border: '1px solid var(--border-color)', borderRadius: '4px', width: '100%', marginBottom: '10px', color: 'var(--text-color)' }}
+            />
+
+            {/* Show selected file info if a file is chosen */}
+            {file ? (
               <div className="file-preview">
-                <FileText size={18} className="text-muted" aria-hidden="true" />
+                <FileText size={18} className="text-muted" />
                 <div className="file-preview-info">
-                  <span className="file-preview-name" title={file.name}>{file.name}</span>
-                  <span className="file-preview-size">{formatFileSize(file.size)}</span>
+                  <span className="file-preview-name">{file.name}</span>
+                  <span className="file-preview-size">{file.size} Bytes</span>
                 </div>
                 <button
                   type="button"
                   className="btn-ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setFile(null);
-                  }}
-                  aria-label="Remove file"
+                  onClick={() => setFile(null)}
                 >
-                  <X size={16} aria-hidden="true" />
+                  <X size={16} />
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
+        {/* Upload button */}
         <button
           type="button"
           className="btn-primary"
@@ -181,10 +149,7 @@ const Home = () => {
           onClick={handleUpload}
         >
           {isUploading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
-              Uploading...
-            </>
+            "Uploading..."
           ) : (
             <>
               <Send size={16} />
@@ -195,6 +160,6 @@ const Home = () => {
       </section>
     </main>
   );
-};
+}
 
 export default Home;
