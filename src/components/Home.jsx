@@ -6,18 +6,21 @@ function Home(props) {
   const [selectedLocation, setSelectedLocation] = useState('');
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+
   const locations = [
     { id: 'fee', name: 'FEE-II' },
     { id: 'opps', name: 'OPPS' },
     { id: 'dbms', name: 'DBMS' },
     { id: 'dis', name: 'Discr' }
   ];
+
   function handleFileChange(event) {
     const selectedFile = event.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
     }
   }
+
   async function handleUpload() {
     if (!file || !selectedLocation) return;
     setIsUploading(true);
@@ -50,6 +53,7 @@ function Home(props) {
       setIsUploading(false);
     }
   }
+
   return (
     <main className="layout-container">
       <header className="page-header">
