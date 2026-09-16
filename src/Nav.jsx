@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FolderOpen, Upload, Search, Sun, Moon, LogOut } from 'lucide-react';
+import { FolderOpen, Upload, Search, Sun, Moon, LogOut, BarChart2 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import './Nav.css';
 
@@ -23,6 +23,10 @@ function Nav(props) {
                     <Link to="/browse" className="nav-link">
                         <Search size={16} />
                         Browse
+                    </Link>
+                    <Link to="/dashboard" className="nav-link">
+                        <BarChart2 size={16} />
+                        Dashboard
                     </Link>
                     <button
                         type="button"

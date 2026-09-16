@@ -1,54 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { supabase } from './supabaseClient';
-import Nav from './Nav';
 import Home from './components/Home';
+import Dashboard from './components/Dashboard';
 import Browse from './Browse';
-import Login from './Login';
-import SignUp from './SignUp';
+import Auth from './Auth';
+import Layout from './Layout';
+import UpdatePassword from './UpdatePassword';
 import './App.css';
+
 function App() {
-  const [theme, setTheme] = useState('dark');
   const [session, setSession] = useState(null);
-  const [showSignUp, setShowSignUp] = useState(false);
+  const [isRecoveringPassword, setIsRecoveringPassword] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'light';
+  });
+
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
   }, [theme]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
+    
+    // Check if URL has access_token and type=recovery when the app initially loads
+    const hash = window.location.hash;
+    if (hash && hash.includes('type=recovery')) {
+        setIsRecoveringPassword(true);
+    }
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveringPassword(true);
+      }
       setSession(session);
     });
+    
     return () => subscription.unsubscribe();
   }, []);
+
   function toggleTheme() {
-    if (theme === 'dark') {
-      setTheme('light');
-    } else {
-      setTheme('dark');
-    }
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   }
+
+  if (isRecoveringPassword) {
+    return <UpdatePassword onComplete={() => {
+        setIsRecoveringPassword(false);
+        // Clear the URL hash so it doesn't trigger again on reload
+        window.history.replaceState(null, '', window.location.pathname);
+    }} />;
+  }
+
   if (!session) {
-    if (showSignUp) {
-      return <SignUp onSwitchToLogin={() => setShowSignUp(false)} />;
-    } else {
-      return <Login onSwitchToSignUp={() => setShowSignUp(true)} />;
-    }
+    return <Auth />;
   }
+
   return (
     <BrowserRouter>
-      <div className="App">
-        <Nav theme={theme} toggleTheme={toggleTheme} />
+      <Layout toggleTheme={toggleTheme} theme={theme}>
         <Routes>
-          <Route path="/" element={<Home theme={theme} />} />
-          <Route path="/browse" element={<Browse theme={theme} />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/browse" element={<Browse />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
-      </div>
+      </Layout>
     </BrowserRouter>
   );
 }
+
 export default App;

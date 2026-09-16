@@ -1,54 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { Search, LayoutGrid, List, FileText, Download, SlidersHorizontal, X } from 'lucide-react';
 import { supabase } from './supabaseClient';
-import './Browse.css';
+
 const LOCATIONS = [
     { id: 'fee', name: 'FEE-II' },
     { id: 'opps', name: 'OPPS' },
     { id: 'dbms', name: 'DBMS' },
     { id: 'dis', name: 'Discr' },
 ];
+
 const SORT_OPTIONS = [
-    { id: 'recent', label: 'Most recent' },
-    { id: 'popular', label: 'Most downloaded' },
+    { id: 'recent', label: 'Recently Added' },
+    { id: 'popular', label: 'Most Popular' },
     { id: 'az', label: 'Title A–Z' },
 ];
-function Browse(props) {
+
+function formatBytes(bytes) {
+    if (!+bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+function Browse() {
     const [notes, setNotes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [query, setQuery] = useState('');
     const [locationFilter, setLocationFilter] = useState('all');
     const [sortBy, setSortBy] = useState('recent');
-    const [view, setView] = useState('grid');
+
     useEffect(() => {
         fetchNotes();
     }, []);
+
     async function fetchNotes() {
         setIsLoading(true);
         try {
             const { data, error } = await supabase.from('files').select('*');
             if (error) throw error;
-            const mappedData = data.map(function (file) {
-                return {
-                    id: file.id,
-                    title: file.name,
-                    location: file.location_id,
-                    date: file.created_at,
-                    downloads: file.downloads || 0,
-                    subject: file.subject || 'General',
-                    uploader: file.uploader || 'Anonymous',
-                    type: file.file_type || file.name.split('.').pop().toUpperCase(),
-                    size: file.size_bytes + " Bytes",
-                    storage_path: file.storage_path
-                };
-            });
-            setNotes(mappedData);
+            setNotes(data.map(file => ({
+                id: file.id,
+                title: file.name,
+                location: file.location_id,
+                date: file.created_at,
+                downloads: file.downloads || 0,
+                uploader: file.uploader || 'Anonymous',
+                type: file.name.split('.').pop().toUpperCase(),
+                size_bytes: file.size_bytes,
+                storage_path: file.storage_path
+            })));
         } catch (error) {
             console.log('Error fetching notes:', error.message);
         } finally {
             setIsLoading(false);
         }
     }
+
     async function handleDownload(note) {
         try {
             const { data, error } = await supabase.storage
@@ -64,26 +71,18 @@ function Browse(props) {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             await supabase.from('files').update({ downloads: note.downloads + 1 }).eq('id', note.id);
-            setNotes(notes.map(function (n) {
-                if (n.id === note.id) {
-                    return { ...n, downloads: n.downloads + 1 };
-                }
-                return n;
-            }));
+            setNotes(notes.map(n => n.id === note.id ? { ...n, downloads: n.downloads + 1 } : n));
         } catch (err) {
             alert('Error downloading: ' + err.message);
         }
     }
-    let filteredNotes = notes.filter(function (note) {
-        let matchesQuery = note.title.toLowerCase().includes(query.toLowerCase());
-        let matchesLocation = false;
-        if (locationFilter === 'all') {
-            matchesLocation = true;
-        } else if (note.location === locationFilter) {
-            matchesLocation = true;
-        }
+
+    let filteredNotes = notes.filter(note => {
+        const matchesQuery = note.title.toLowerCase().includes(query.toLowerCase());
+        const matchesLocation = locationFilter === 'all' || note.location === locationFilter;
         return matchesQuery && matchesLocation;
     });
+
     if (sortBy === 'recent') {
         filteredNotes.sort((a, b) => new Date(b.date) - new Date(a.date));
     } else if (sortBy === 'popular') {
@@ -91,147 +90,124 @@ function Browse(props) {
     } else if (sortBy === 'az') {
         filteredNotes.sort((a, b) => a.title.localeCompare(b.title));
     }
-    let activeLocationName = "";
-    for (let i = 0; i < LOCATIONS.length; i++) {
-        if (LOCATIONS[i].id === locationFilter) {
-            activeLocationName = LOCATIONS[i].name;
-        }
-    }
+
     return (
-        <main className="layout-container">
-            <header className="page-header">
-                <h1 className="page-title">Browse Notes</h1>
-                <p className="page-description">Search and filter notes shared across campus.</p>
-            </header>
-            <section className="browse-controls">
-                <div className="search-bar">
-                    <Search size={16} className="search-icon" />
-                    <input
+        <div className="flex flex-col w-full">
+            {/* Hero search section */}
+            <section className="w-full py-space-xl mb-space-lg flex flex-col items-center text-center max-w-3xl mx-auto">
+                <span className="px-3 py-1 rounded-full bg-primary-fixed/60 text-primary font-label-sm text-label-sm font-semibold tracking-wide mb-3">CAMPUS VAULT REPOSITORY</span>
+                <h1 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-2">Find verified notes &amp; course resources</h1>
+                <p className="font-body-lg text-body-lg text-on-surface-variant mb-space-lg max-w-xl">Curated lecture notes, midterms, and study guides shared by your peers.</p>
+                
+                <div className="w-full relative flex items-center shadow-sm rounded-2xl bg-surface-container-lowest p-2 border border-surface-container">
+                    <span className="material-symbols-outlined text-outline text-2xl ml-3 mr-2 pointer-events-none">search</span>
+                    <input 
+                        className="w-full py-3 bg-transparent text-on-surface font-body-lg placeholder:text-outline focus:outline-none"
+                        placeholder="Search notes by title..."
                         type="text"
-                        className="search-input"
-                        placeholder="Search by title..."
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
-                    {query ? (
-                        <button
+                    {query && (
+                        <button 
                             type="button"
-                            className="btn-ghost search-clear"
+                            className="mr-2 p-1 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
                             onClick={() => setQuery('')}
                         >
-                            <X size={14} />
+                            <span className="material-symbols-outlined text-lg">close</span>
                         </button>
-                    ) : null}
+                    )}
                 </div>
-                <div className="filter-row">
-                    <div className="chip-group">
-                        <button
+
+                {/* Filter chips */}
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-space-md">
+                    <button 
+                        type="button"
+                        className={`px-4 py-2 rounded-full font-label-sm font-semibold transition-all shadow-sm ${locationFilter === 'all' ? 'bg-on-surface text-surface' : 'bg-surface-container-lowest text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}
+                        onClick={() => setLocationFilter('all')}
+                    >
+                        All
+                    </button>
+                    {LOCATIONS.map(loc => (
+                        <button 
+                            key={loc.id}
                             type="button"
-                            className={`chip ${locationFilter === 'all' ? 'chip-active' : ''}`}
-                            onClick={() => setLocationFilter('all')}
+                            className={`px-4 py-2 rounded-full font-label-sm font-medium transition-all shadow-sm ${locationFilter === loc.id ? 'bg-on-surface text-surface font-semibold' : 'bg-surface-container-lowest text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}
+                            onClick={() => setLocationFilter(loc.id)}
                         >
-                            All
+                            {loc.name}
                         </button>
-                        {LOCATIONS.map(function (loc) {
-                            return (
-                                <button
-                                    key={loc.id}
-                                    type="button"
-                                    className={`chip ${locationFilter === loc.id ? 'chip-active' : ''}`}
-                                    onClick={() => setLocationFilter(loc.id)}
-                                >
-                                    {loc.name}
-                                </button>
-                            );
-                        })}
-                    </div>
-                    <div className="filter-actions">
-                        <div className="select-wrapper sort-select-wrapper">
-                            <SlidersHorizontal size={14} className="sort-icon" />
-                            <select
-                                className="form-select sort-select"
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                            >
-                                {SORT_OPTIONS.map(function (opt) {
-                                    return <option key={opt.id} value={opt.id}>{opt.label}</option>;
-                                })}
-                            </select>
-                        </div>
-                        <div className="view-toggle">
-                            <button
-                                type="button"
-                                className={`view-toggle-btn ${view === 'grid' ? 'view-toggle-active' : ''}`}
-                                onClick={() => setView('grid')}
-                            >
-                                <LayoutGrid size={16} />
-                            </button>
-                            <button
-                                type="button"
-                                className={`view-toggle-btn ${view === 'list' ? 'view-toggle-active' : ''}`}
-                                onClick={() => setView('list')}
-                            >
-                                <List size={16} />
-                            </button>
-                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* Controls bar */}
+            <section className="flex items-center justify-between mb-space-md pb-2 border-b border-surface-container">
+                <div className="flex items-center gap-2">
+                    <h2 className="font-title-md text-title-md font-semibold text-on-surface">Results</h2>
+                    <span className="text-outline text-body-sm">· {filteredNotes.length} items</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center bg-surface-container-lowest rounded-xl px-3 py-1.5 shadow-sm text-on-surface-variant">
+                        <span className="font-label-sm text-outline mr-1.5">Sort:</span>
+                        <select 
+                            className="bg-transparent font-label-sm font-semibold text-on-surface focus:outline-none cursor-pointer"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                        >
+                            {SORT_OPTIONS.map(opt => (
+                                <option key={opt.id} value={opt.id}>{opt.label}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
             </section>
-            <section>
-                <p className="results-count">
-                    {filteredNotes.length} notes
-                    {locationFilter !== 'all' ? ` in ${activeLocationName}` : ''}
-                </p>
+
+            {/* Cards grid */}
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-lg w-full mb-space-xl">
                 {isLoading ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-                        Loading...
+                    <div className="col-span-full flex justify-center items-center py-16">
+                        <span className="material-symbols-outlined text-primary text-3xl animate-spin">progress_activity</span>
                     </div>
                 ) : filteredNotes.length === 0 ? (
-                    <div className="empty-state">
-                        <FileText size={28} className="text-muted" />
-                        <p className="empty-state-title">No notes found</p>
-                        <p className="empty-state-hint">Try a different search or location.</p>
+                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-on-surface-variant">
+                        <span className="material-symbols-outlined text-4xl mb-2 text-outline">search_off</span>
+                        <p className="font-title-md text-title-md font-semibold">No notes found</p>
+                        <p className="font-body-sm text-body-sm text-outline">Try a different search or category.</p>
                     </div>
                 ) : (
-                    <div className={view === 'grid' ? 'notes-grid' : 'notes-list'}>
-                        {filteredNotes.map(function (note) {
-                            return (
-                                <article key={note.id} className={view === 'grid' ? 'note-card' : 'note-row'}>
-                                    <div className="note-icon">
-                                        <FileText size={18} />
-                                    </div>
-                                    <div className="note-info">
-                                        <h3 className="note-title">{note.title}</h3>
-                                        <div className="note-meta">
-                                            <span className="note-tag">{note.subject}</span>
-                                            <span className="note-meta-dot">•</span>
-                                            <span>{note.uploader}</span>
-                                            <span className="note-meta-dot">•</span>
-                                            <span>{note.type} · {note.size}</span>
-                                        </div>
-                                    </div>
-                                    <div className="note-stats">
-                                        <span className="note-downloads">
-                                            <Download size={13} /> {note.downloads}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            className="btn-ghost note-download-btn"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDownload(note);
-                                            }}
-                                        >
-                                            <Download size={16} />
-                                        </button>
-                                    </div>
-                                </article>
-                            );
-                        })}
-                    </div>
+                    filteredNotes.map(note => (
+                        <article key={note.id} className="group bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between hover:-translate-y-1">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="px-2.5 py-1 rounded-full bg-surface-container-low text-on-surface-variant font-label-sm font-semibold text-[11px]">
+                                        {LOCATIONS.find(l => l.id === note.location)?.name || 'Unknown'}
+                                    </span>
+                                    <span className="material-symbols-outlined text-outline text-lg hover:text-primary transition-colors cursor-pointer">bookmark</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-title-md text-title-md font-bold text-on-surface group-hover:text-primary transition-colors leading-snug mb-1 truncate">{note.title}</h3>
+                                    <p className="font-body-sm text-on-surface-variant line-clamp-2">Uploaded by {note.uploader}</p>
+                                </div>
+                            </div>
+                            <div className="pt-space-md mt-space-md border-t border-surface-container flex items-center justify-between">
+                                <span className="font-label-sm text-[11px] text-outline">{note.type} · {formatBytes(note.size_bytes)} · {note.downloads} downloads</span>
+                                <div className="flex items-center gap-1.5">
+                                    <button 
+                                        type="button"
+                                        className="bg-primary hover:bg-primary-container text-on-primary px-3 py-1.5 rounded-xl font-label-sm font-semibold flex items-center gap-1 transition-all"
+                                        onClick={() => handleDownload(note)}
+                                    >
+                                        <span className="material-symbols-outlined text-sm">download</span>Download
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    ))
                 )}
             </section>
-        </main>
+        </div>
     );
 }
+
 export default Browse;
