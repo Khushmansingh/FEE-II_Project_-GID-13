@@ -1,80 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Layout from './components/layout/Layout';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Browse from './Browse';
+import ResourceDetail from './components/ResourceDetail';
+import Profile from './components/Profile';
+import NotFound from './components/NotFound';
 import Auth from './Auth';
-import Layout from './Layout';
 import UpdatePassword from './UpdatePassword';
+import LoadingSpinner from './components/common/LoadingSpinner';
 import './App.css';
 
-function App() {
-  const [session, setSession] = useState(null);
-  const [isRecoveringPassword, setIsRecoveringPassword] = useState(false);
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'light';
-  });
+function AppContent() {
+    const { session, loading, isRecoveringPassword, setIsRecoveringPassword } = useAuth();
 
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-    
-    // Check if URL has access_token and type=recovery when the app initially loads
-    const hash = window.location.hash;
-    if (hash && hash.includes('type=recovery')) {
-        setIsRecoveringPassword(true);
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <LoadingSpinner fullPage message="Connecting to Campus Vault..." />
+            </div>
+        );
     }
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsRecoveringPassword(true);
-      }
-      setSession(session);
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
+    if (isRecoveringPassword) {
+        return (
+            <UpdatePassword
+                onComplete={() => {
+                    setIsRecoveringPassword(false);
+                    window.history.replaceState(null, '', window.location.pathname);
+                }}
+            />
+        );
+    }
 
-  function toggleTheme() {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  }
+    if (!session) {
+        return <Auth />;
+    }
 
-  if (isRecoveringPassword) {
-    return <UpdatePassword onComplete={() => {
-        setIsRecoveringPassword(false);
-        // Clear the URL hash so it doesn't trigger again on reload
-        window.history.replaceState(null, '', window.location.pathname);
-    }} />;
-  }
+    return (
+        <BrowserRouter>
+            <Routes>
+                {/* Nested layout routes */}
+                <Route path="/" element={<Layout />}>
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="browse" element={<Browse />} />
+                    <Route path="upload" element={<Home />} />
+                    {/* Dynamic route for single note details */}
+                    <Route path="notes/:id" element={<ResourceDetail />} />
+                    {/* Student academic profile */}
+                    <Route path="profile" element={<Profile />} />
+                    {/* 404 Catch-All Page */}
+                    <Route path="*" element={<NotFound />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
+}
 
-  if (!session) {
-    return <Auth />;
-  }
-
-  return (
-    <BrowserRouter>
-      <Layout toggleTheme={toggleTheme} theme={theme}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/browse" element={<Browse />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
-  );
+export function App() {
+    return (
+        <ThemeProvider>
+            <ToastProvider>
+                <AuthProvider>
+                    <AppContent />
+                </AuthProvider>
+            </ToastProvider>
+        </ThemeProvider>
+    );
 }
 
 export default App;

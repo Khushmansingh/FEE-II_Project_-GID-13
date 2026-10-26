@@ -1,10 +1,9 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { FolderOpen, Upload, Search, Sun, Moon, LogOut, BarChart2 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import './Nav.css';
 
-function Nav(props) {
+export function Nav(props) {
     async function handleLogout() {
         await supabase.auth.signOut();
     }
@@ -16,7 +15,7 @@ function Nav(props) {
                     <span>Campus Vault</span>
                 </div>
                 <div className="nav-links">
-                    <Link to="/" className="nav-link">
+                    <Link to="/upload" className="nav-link">
                         <Upload size={16} />
                         Upload
                     </Link>

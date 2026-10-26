@@ -1,16 +1,24 @@
 # 📁 Campus Vault
 
-A modern web application for uploading, browsing, and downloading academic resources across campus. Built as part of the **FEE-II Project (GID-13)**.
+A modern, high-performance web application for uploading, browsing, managing, and downloading academic resources across campus. Built as part of the **FEE-II Project (GID-13)**.
 
 ---
 
-## ✨ Features
+## ✨ Features & Architecture
 
-- **Upload Documents** — Drag-and-drop or click to upload PDFs, DOCX, and PPTX files to specific campus locations.
-- **Browse Notes** — Search, filter by location, and sort notes shared by students. Supports grid and list views.
-- **Download Files** — One-click download of any uploaded resource directly from the browser.
-- **Dark / Light Mode** — Toggle between dark and light themes with a single click. Preference is saved across sessions.
-- **Supabase Backend** — Files are stored in Supabase Storage with metadata tracked in a PostgreSQL database.
+- **SPA Routing (React Router v7)** — Nested layout routing (`<Outlet />`), active navigation states, dynamic resource routes (`/notes/:id`), student academic profile (`/profile`), and 404 Not Found handling.
+- **State Architecture & Context API**
+  - **`AuthContext`** — Centralized user session, authentication states (`signIn`, `signUp`, `signOut`, `updatePassword`), and profile synchronization.
+  - **`ThemeContext`** — Dark and light mode toggle with `localStorage` persistence.
+  - **`ToastContext`** — Non-blocking animated toast notification system replacing crude browser alerts.
+- **Complete CRUD Workflow**
+  - **Create**: Upload documents (PDF, DOCX, PPTX) to specific course categories with drag-and-drop.
+  - **Read**: Browse verified notes with debounced search, category filter chips, and sorting (Recent, Popular, A–Z, Size). Includes both Grid and Table view modes.
+  - **Update**: Edit resource title, topic/subject, and course category in real time via modal.
+  - **Delete**: Safe removal of files from Supabase Storage and database with confirmation dialog.
+- **Interactive UI Components** — Accessible dialog modals, confirmation alerts, tab switchers, user profile dropdowns, empty states, and animated loading indicators.
+- **Student Profile Management** — Integrated with `profiles` table to track branch, semester, bio, and student uploads.
+- **Analytics Dashboard** — Visualizes uploads by course (Bar Chart) and storage consumption (Donut Chart) using Recharts.
 
 ---
 
@@ -19,11 +27,13 @@ A modern web application for uploading, browsing, and downloading academic resou
 | Layer | Technology |
 |---|---|
 | **Frontend** | React 19, React Router v7 |
-| **Styling** | Vanilla CSS with CSS custom properties (design tokens) |
-| **Icons** | Lucide React |
+| **State Management** | React Context API (`AuthContext`, `ThemeContext`, `ToastContext`), Custom Hooks (`useDebounce`) |
+| **Styling** | Tailwind CSS v4, CSS Custom Properties (Design Tokens) |
+| **Icons** | Google Material Symbols Outlined, Lucide React |
+| **Charts** | Recharts v3 |
 | **Build Tool** | Vite 8 |
-| **Backend / DB** | Supabase (PostgreSQL + Storage) |
-| **Fonts** | Space Grotesk, IBM Plex Sans (via Google Fonts) |
+| **Backend / DB** | Supabase (PostgreSQL + Storage Bucket) |
+| **Fonts** | Plus Jakarta Sans |
 
 ---
 
@@ -31,83 +41,78 @@ A modern web application for uploading, browsing, and downloading academic resou
 
 ```
 src/
+├── api/
+│   ├── filesService.js        # Centralized CRUD & Supabase Storage operations
+│   └── profileService.js      # Student profile queries and upserts
 ├── components/
-│   ├── Home.jsx          # Upload page with drag-and-drop
-│   └── Home.css
+│   ├── common/
+│   │   ├── Button.jsx         # Accessible button with variants & loading state
+│   │   ├── Input.jsx          # Controlled input with error & icon support
+│   │   ├── Select.jsx         # Accessible select dropdown
+│   │   ├── Modal.jsx          # Accessible dialog with ESC & backdrop handling
+│   │   ├── ConfirmationModal.jsx # Destructive action confirmation dialog
+│   │   ├── Dropdown.jsx       # User action dropdown menu
+│   │   ├── Tabs.jsx           # Reusable tab switcher (Grid vs List, etc.)
+│   │   ├── EmptyState.jsx     # Friendly zero-data visual fallback
+│   │   └── LoadingSpinner.jsx # Centralized spinner indicator
+│   ├── forms/
+│   │   └── EditResourceModal.jsx # Resource metadata update modal
+│   ├── layout/
+│   │   ├── Layout.jsx         # Main layout route with Outlet & responsive drawer
+│   │   ├── Sidebar.jsx        # Sidebar with NavLink active states
+│   │   └── Header.jsx         # Sticky header with actions, theme & profile menu
+│   ├── Home.jsx               # Upload Resource page with drag-and-drop
+│   ├── Browse.jsx             # Notes repository with debounced search & sorting
+│   ├── Dashboard.jsx          # Visual analytics & metrics
+│   ├── ResourceDetail.jsx     # Dynamic note detail page (/notes/:id)
+│   ├── Profile.jsx            # Student academic profile & personal uploads (/profile)
+│   └── NotFound.jsx           # 404 page for unknown routes
 ├── context/
-│   └── ThemeContext.jsx   # Dark/light theme provider (localStorage-persisted)
-├── App.jsx               # Root component with routing
-├── App.css
-├── Browse.jsx            # Browse notes with search, filter, sort, download
-├── Browse.css
-├── Nav.jsx               # Sticky navbar with theme toggle
-├── Nav.css
-├── supabaseClient.js     # Supabase client configuration
-├── index.css             # Global design tokens & theme variables
-└── main.jsx              # App entry point
+│   ├── AuthContext.jsx        # Authentication and session state
+│   ├── ThemeContext.jsx       # Dark / Light theme state
+│   └── ToastContext.jsx       # Non-intrusive toast notifications
+├── hooks/
+│   └── useDebounce.js         # Debounced value hook for search
+├── utils/
+│   ├── formatters.js          # Byte size, date, and extension formatters
+│   └── validators.js          # Client-side validation rules
+├── App.jsx                    # Root router configuration & provider hierarchy
+├── Auth.jsx                   # Sign In / Sign Up portal
+├── UpdatePassword.jsx         # Password recovery workflow
+├── supabaseClient.js          # Supabase client initialization
+├── index.css                  # Tailwind styles and theme tokens
+└── main.jsx                   # Application entry point
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18+)
-- A [Supabase](https://supabase.com/) project
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/Khushmansingh/FEE-II_Project_-GID-13.git
-cd FEE-II_Project_-GID-13
-```
-
-### 2. Install dependencies
-
+### 1. Install dependencies
 ```bash
 npm install
 ```
 
-### 3. Set up environment variables
-
-Create a `.env` file in the project root:
-
+### 2. Environment Variables
+Create a `.env` file in the root directory:
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 4. Set up the database
+### 3. Database Schema
+Execute the SQL in [`supabase_schema.sql`](supabase_schema.sql) in your Supabase SQL Editor.
 
-Run the SQL in [`supabase_schema.sql`](supabase_schema.sql) in your Supabase SQL Editor to create the required tables, storage bucket, and RLS policies.
-
-### 5. Start the dev server
-
+### 4. Run Locally
 ```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173` (or the next available port).
-
----
-
-## 📦 Available Scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Start the development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview the production build |
-| `npm run lint` | Run ESLint |
-
----
-
-## 🎨 Theming
-
-Campus Vault supports **dark** and **light** themes. The toggle is in the top-right corner of the navigation bar. Theme preference is persisted in `localStorage` so it survives page refreshes.
-
-The theming system uses CSS custom properties defined in `index.css`, with overrides applied via the `[data-theme="light"]` selector on the root `<html>` element.
+### 5. Production Build & Lint
+```bash
+npm run lint
+npm run build
+```
 
 ---
 
@@ -117,9 +122,3 @@ The theming system uses CSS custom properties defined in `index.css`, with overr
 |---|---|
 | Khushman Singh | Developer |
 | Gitansh | Developer |
-
----
-
-## 📄 License
-
-This project is part of an academic course (FEE-II) and is intended for educational purposes.
